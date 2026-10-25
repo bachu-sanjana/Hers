@@ -1,0 +1,11 @@
+<!doctype html><html lang=en><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Verify a file</title><link rel=stylesheet href=/style.css></head><body><div class=wrap>
+<header><h1>Verify a file</h1><a href=/>Back</a></header>
+<div class=card><p class=meta>Upload a file to check it against the record. Nothing from the vault is shown.</p>
+<label class=drop id=dz for=f><span id=fn>Drop a file here or click to choose</span><input type=file id=f></label><div id=o aria-live=polite></div></div></div>
+<script>const f=document.querySelector("#f"),dz=document.querySelector("#dz"),o=document.querySelector("#o");
+["dragover","dragenter"].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.classList.add("on")}));["dragleave","drop"].forEach(e=>dz.addEventListener(e,x=>{x.preventDefault();dz.classList.remove("on")}));
+dz.addEventListener("drop",x=>{if(x.dataTransfer.files.length){f.files=x.dataTransfer.files;go()}});f.onchange=go;
+async function go(){const file=f.files[0];if(!file)return;document.querySelector("#fn").textContent=file.name;o.innerHTML="<p class=meta>Checking…</p>";
+const d=new FormData();d.append("file",file);try{const r=await(await fetch("/api/verify",{method:"POST",body:d})).json();
+const m={verified:["ok","Integrity verified","Matches incident #"+r.incident+" ("+r.kind+"), saved "+r.ts+"."],modified:["bad","Change detected","A file with this name is in the record, but its contents differ."],unknown:["bad","Not in record","No saved file matches this one."]}[r.status];
+o.innerHTML=`<p class="big ${m[0]}">${m[1]}</p><p>${m[2]}</p><p class=fp>SHA-256: ${r.hash}</p>`}catch(e){o.innerHTML="<p class=err>Could not check the file.</p>"}}</script></body></html>
